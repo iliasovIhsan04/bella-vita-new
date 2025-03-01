@@ -48,6 +48,7 @@ const [onesignalPush, setOneSignalPush] = useState('')
   const [brendData, setBrendData] = useState([]);
   const [local, setLocal] = useState(null)
   const navigation = useNavigation()
+
   useEffect(() => {
     const fetchBrendData = async () => {
       try {
@@ -110,12 +111,12 @@ const [onesignalPush, setOneSignalPush] = useState('')
     }
   }, [modalRegistration]);
 
+
   useEffect(() => {
     const initializeOneSignal = async () => {
       try {
-        const token = await AsyncStorage.getItem("tokenActivation");
-        if (token) {
-          setLocal(token);
+        const pushToken = await AsyncStorage.getItem("oneSignalPushToken");
+        if (!pushToken) {
           OneSignal.initialize("e71cc0df-2dba-490b-9fec-fe18f9b8ff6e");
           OneSignal.Notifications.requestPermission(true);
           let externalId = String(user?.id);
@@ -127,46 +128,46 @@ const [onesignalPush, setOneSignalPush] = useState('')
             const userId = String(subscription?.current?.id);
             setOneSignalPush(userId);
             await AsyncStorage.setItem("oneSignalPushToken", userId);
-            console.log("OneSignal push token сакталды:", userId);
           });
         } else {
-          console.log("Колдонуучу катталган эмес, OneSignal иштебейт.");
+          console.log("Пользователь не зарегистрирован, OneSignal не работает.");
         }
       } catch (error) {
-        console.error("OneSignal инициализациясы катасы:", error);
+        console.error("Ошибка инициализации OneSignal:", error);
       }
     };
 
-    const handleNotificationClick = (event) => {
-      console.log("Push билдирүү басылды:", event);
+  const handleNotificationClick = (event) => {
+    console.log("Push уведомление нажато:", event);
 
-      const screen = event?.notification?.additionalData?.screen;
-      if (screen) {
-        console.log("Навигация:", screen);
-        router.push(screen);
-      } else {
-        navigation.navigate("navigate/Notifications"); 
-      }
-    };
-    initializeOneSignal();
-    OneSignal.Notifications.addEventListener("click", handleNotificationClick);
-    return () => {
-      OneSignal.Notifications.removeEventListener("click", handleNotificationClick);
-    };
-  }, [user]);
+    const screen = event?.notification?.additionalData?.screen;
+    if (screen) {
+      console.log("Навигация:", screen);
+      router.push(screen);
+    } else {
+      navigation.navigate("navigate/Notifications");
+    }
+  };
+  
+  initializeOneSignal();
+  OneSignal.Notifications.addEventListener("click", handleNotificationClick);
+  return () => {
+    OneSignal.Notifications.removeEventListener("click", handleNotificationClick);
+  };
+}, [user]);
 
-  useEffect(() => {
-    AsyncStorage.getItem("tokenActivation").then((token) => setLocal(token));
-  }, []);
+useEffect(() => {
+  AsyncStorage.getItem("tokenActivation").then((token) => setLocal(token));
+}, []);
 
- const sendTokenToServer = async () => {
+
+  const sendTokenToServer = async () => {
     try {
       const storedToken = await AsyncStorage.getItem("oneSignalPushToken");
       if (!storedToken || !local) {
-        console.error("Ошибка: Push токен же Авторизация токен жок!");
+        console.error("Ошибка: Нет Push токена или токена авторизации!");
         return;
       }
-      console.log("Sending token:", storedToken);
       const response = await axios.post(
         `${url}/device-token/`,
         {
@@ -176,11 +177,17 @@ const [onesignalPush, setOneSignalPush] = useState('')
           headers: { Authorization: `Token ${local}` },
         }
       );
-      console.log("Token sent successfully:", response.data);
+      console.log("Токен успешно отправлен:", response.data);
     } catch (error) {
-      console.error("Error sending token to server:", error);
+      console.error("Ошибка при отправке токена на сервер:", error);
     }
   };
+
+  useEffect(() => {
+    if (showModal) {
+      sendTokenToServer();
+    }
+  }, [showModal]);
 
   return (
     <>
@@ -271,7 +278,6 @@ const [onesignalPush, setOneSignalPush] = useState('')
                     <Wave
                       style={styles.check_price_box}
                       // handle={() => router.push("/navigate/ProductGiven")}
-                      handle={() => sendTokenToServer(onesignalPush)}
                     >
                       <Column gap={6} style={{ alignItems: "center" }}>
                         <Scanner />
