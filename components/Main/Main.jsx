@@ -23,7 +23,7 @@ import StoryComponent from "./StorisBlock";
 import { router, useNavigation } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import Wrapper from "../../assets/styles/components/Wrapper";
-import Column from "../../assets/styles/components/Column";
+import Column from "../../assets/styles/components/Column"; 
 import { colors } from "@/assets/styles/components/colors";
 import Flex from "../../assets/styles/components/Flex";
 import Scanner from "../../assets/svg/imgScanner";
@@ -34,7 +34,8 @@ import { url } from "@/Api";
 import axios from "axios";
 import Button from "@/assets/customs/Button";
 import CartImg from "../../assets/svg/cartimg";
-import { OneSignal } from 'react-native-onesignal';
+import { OneSignal } from 'react-native-onesignal'
+
 const containerWidth = (Dimensions.get("window").width - 32) / 2 - 5;
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -47,6 +48,7 @@ const [onesignalPush, setOneSignalPush] = useState('')
   const [refreshing, setRefreshing] = useState(false);
   const [brendData, setBrendData] = useState([]);
   const [local, setLocal] = useState(null)
+  const [pushToken, setPushToken] = useState(null);
   const navigation = useNavigation()
 
   useEffect(() => {
@@ -111,7 +113,6 @@ const [onesignalPush, setOneSignalPush] = useState('')
     }
   }, [modalRegistration]);
 
-
   useEffect(() => {
     const initializeOneSignal = async () => {
       try {
@@ -160,7 +161,6 @@ useEffect(() => {
   AsyncStorage.getItem("tokenActivation").then((token) => setLocal(token));
 }, []);
 
-
   const sendTokenToServer = async () => {
     try {
       const storedToken = await AsyncStorage.getItem("oneSignalPushToken");
@@ -188,6 +188,7 @@ useEffect(() => {
       sendTokenToServer();
     }
   }, [showModal]);
+
 
   return (
     <>
@@ -278,6 +279,7 @@ useEffect(() => {
                     <Wave
                       style={styles.check_price_box}
                       // handle={() => router.push("/navigate/ProductGiven")}
+                      handle={() => sendTokenToServer(pushToken)}
                     >
                       <Column gap={6} style={{ alignItems: "center" }}>
                         <Scanner />
@@ -303,7 +305,7 @@ useEffect(() => {
                           color={colors.black}
                           style={{ textAlign: "center" }}
                         >
-                          Избранные товары
+                          Избранные това
                         </TextContent>
                       </Column>
                     </Wave>
