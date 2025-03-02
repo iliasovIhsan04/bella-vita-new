@@ -114,9 +114,25 @@ const [onesignalPush, setOneSignalPush] = useState('')
   }, [modalRegistration]);
 
   useEffect(() => {
+    const getPushToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem("oneSignalPushToken");
+        if (token) {
+          setPushToken(token);
+        }
+      } catch (error) {
+        console.error("Push токенди алуу катасы:", error);
+      }
+    };
+
+    getPushToken();
+  }, []);
+
+
+  useEffect(() => {
     const initializeOneSignal = async () => {
       try {
-        const pushToken = await AsyncStorage.getItem("oneSignalPushToken");
+  
         if (!pushToken) {
           OneSignal.initialize("e71cc0df-2dba-490b-9fec-fe18f9b8ff6e");
           OneSignal.Notifications.requestPermission(true);
@@ -160,18 +176,16 @@ const [onesignalPush, setOneSignalPush] = useState('')
 useEffect(() => {
   AsyncStorage.getItem("tokenActivation").then((token) => setLocal(token));
 }, []);
-
   const sendTokenToServer = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem("oneSignalPushToken");
-      if (!storedToken || !local) {
+      if (!pushToken || !local) {
         console.error("Ошибка: Нет Push токена или токена авторизации!");
         return;
       }
       const response = await axios.post(
         `${url}/device-token/`,
         {
-          device_token: storedToken, 
+          device_token: pushToken, 
         },
         {
           headers: { Authorization: `Token ${local}` },
@@ -188,7 +202,6 @@ useEffect(() => {
       sendTokenToServer();
     }
   }, [showModal]);
-
 
   return (
     <>
